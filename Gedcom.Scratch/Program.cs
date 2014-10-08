@@ -21,8 +21,21 @@ namespace Gedcom.Scratch
             var place = person.Residances.FirstOrDefault();
 
 
-            var places = doc.Individuals.SelectMany(i =>i.Residances.Select(e =>e.Place)).Distinct().ToList();
+            var places = doc.Individuals.SelectMany(i =>
+                i.Residances.Select(e => new { e.Place, person = i }))
+                .GroupBy(x => x.Place)
+                .Select(x => new Location {
+                    Place = x.Key,
+                    People = x.Select(p => p.person).ToList()
+                }).ToList();
 
         }
+    }
+
+    public class Location
+    {
+        public string Place { get; set; }
+
+        public IEnumerable<Net.Individual> People { get;set; }
     }
 }
