@@ -27,7 +27,7 @@ namespace Gedcom.Net
                     {
                         return null;
                     }
-                    return new Event(Document, node);
+                    return new Event(this, Document, node);
                 });
             }
         }
@@ -43,7 +43,7 @@ namespace Gedcom.Net
                     {
                         return null;
                     }
-                    return new Event(Document, node);
+                    return new Event(this, Document, node);
                 });
             }
         }
@@ -62,6 +62,22 @@ namespace Gedcom.Net
 
                     return fams.SelectMany(x => x.Parents).ToList();
                 });
+            }
+        }
+
+        public IEnumerable<Individual> Ancestors
+        {
+            get
+            {
+                foreach (var parent in Parents)
+                {
+                    yield return parent;
+
+                    foreach (var an in parent.Ancestors)
+                    {
+                        yield return an;
+                    }
+                }
             }
         }
 
@@ -87,7 +103,7 @@ namespace Gedcom.Net
             {
                 return GetValueFromNodes("RESI", n =>
                 {
-                    return n.Select(x => new Residancy(Document, x)).ToList();
+                    return n.Select(x => new Residancy(this, Document, x)).ToList();
                 });
             }
         }

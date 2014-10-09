@@ -11,10 +11,13 @@ namespace Gedcom.Net
     {
         private readonly FileNode _node;
 
-        public Event(GedcomDocument document, FileNode node) : base(document, node)
+        public Event(Individual person, GedcomDocument document, FileNode node) : base(document, node)
         {
             _node = node;
+            Person = person;
         }
+
+        public Individual Person { get; private set; }
 
         private Types? _type;
         public Types Type
@@ -55,7 +58,7 @@ namespace Gedcom.Net
                     {
                         return new Date(s.First());
                     }
-                    return null;
+                    return new Date();
                 });
             }
         }

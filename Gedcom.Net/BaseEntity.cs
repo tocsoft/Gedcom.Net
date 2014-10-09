@@ -14,7 +14,7 @@ namespace Gedcom.Net
 
         protected GedcomDocument Document { get { return _document; } }
 
-        internal string Reference { get { return _source.Reference; } }
+        public string Reference { get { return _source.Reference; } }
 
         internal BaseEntity(GedcomDocument document, FileDom.FileNode source)
         {

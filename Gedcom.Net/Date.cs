@@ -24,9 +24,18 @@ namespace Gedcom.Net
             }
         }
 
-        internal Date(string value)
+        internal Date()
         {
-            value = value.ToUpper().Trim();
+            From = DateTime.MinValue;
+            FromAccuracy = Accuracy.Unknown;
+
+            To = DateTime.MaxValue;
+            ToAccuracy = Accuracy.Unknown;
+        }
+
+        internal Date(string value) : this()
+        {
+            Text = value = value.ToUpper().Trim();
             if (value.StartsWith("BEF"))
             {
                 value = value.Substring(value.IndexOf(' ')).Trim();
@@ -58,6 +67,7 @@ namespace Gedcom.Net
             }
             else
             {
+                bool matchedAnyPart = false;
                 var parts = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
                 int startDay = -1;
@@ -70,6 +80,7 @@ namespace Gedcom.Net
                 {
                     parts.Remove(day);
                     startDay = int.Parse(day);
+                    matchedAnyPart = true;
                 }
 
                 var month = parts
@@ -81,20 +92,17 @@ namespace Gedcom.Net
                 if (month != null)
                 {
                     parts.Remove(month);
-                    var m = month.ToUpperInvariant().Substring(0, 3);
+                    var m = month.ToUpperInvariant().Substring(0, Math.Min(month.Length, 3));
                     if (_monthLookUp.ContainsKey(m))
                     {
 
                         startMonth = endMonth = _monthLookUp[m];
-                    }
-                    else
-                    {
-                        throw new FormatException("Not convertable to a month");
+                        matchedAnyPart = true;
                     }
                 }
 
                 var year = parts
-                    .Where(x => x.All(char.IsDigit) && x.Length <= 4 && x.Length >= 2)
+                    .Where(x => x.Trim('S').All(char.IsDigit) && x.Length <= 4 && x.Length >= 2)
                     .FirstOrDefault();
 
                 int startYear = DateTime.MinValue.Year;
@@ -104,30 +112,33 @@ namespace Gedcom.Net
                     parts.Remove(year);
 
                     endYear = startYear = int.Parse(year);
+                    matchedAnyPart = true;
                 }
-
-                if (startDay > 0)
+                if (matchedAnyPart)
                 {
-                    From = new DateTime(startYear, startMonth, startDay);
-                    To = new DateTime(endYear, endMonth, startDay);
-
-                    FromAccuracy = ToAccuracy = Accuracy.Day;
-                }
-                else
-                {
-                    if (month != null)
+                    if (startDay > 0)
                     {
-                        FromAccuracy = ToAccuracy = Accuracy.Month;
+                        From = new DateTime(startYear, startMonth, startDay);
+                        To = new DateTime(endYear, endMonth, startDay);
+
+                        FromAccuracy = ToAccuracy = Accuracy.Day;
                     }
                     else
                     {
-                        FromAccuracy = ToAccuracy = Accuracy.Year;
-                    }
+                        if (month != null)
+                        {
+                            FromAccuracy = ToAccuracy = Accuracy.Month;
+                        }
+                        else
+                        {
+                            FromAccuracy = ToAccuracy = Accuracy.Year;
+                        }
 
-                    From = new DateTime(startYear, startMonth, 1);
-                    To = new DateTime(endYear, endMonth, 1)
-                        .AddMonths(1)
-                        .AddDays(-1);
+                        From = new DateTime(startYear, startMonth, 1);
+                        To = new DateTime(endYear, endMonth, 1)
+                            .AddMonths(1)
+                            .AddDays(-1);
+                    }
                 }
             }
         }
@@ -135,6 +146,11 @@ namespace Gedcom.Net
         public Date(FileDom.FileNode node) : this(node.Value)
         {
             _node = node;
+        }
+
+        public string Text
+        {
+            get; private set;
         }
 
         public Accuracy FromAccuracy { get; private set; }
@@ -145,23 +161,23 @@ namespace Gedcom.Net
 
         public override string ToString()
         {
+            return Text;
+            //if (From != To)
+            //{
 
-            if (From != To)
-            {
-
-                if (FromAccuracy == Accuracy.Unknown && ToAccuracy != Accuracy.Unknown)
-                {
-                    return string.Format("BEF {1:" + DateFormatFromAccuracy(ToAccuracy) + "}", From, To);
-                }
-                else
-                {
-                    return string.Format("FROM {0:" + DateFormatFromAccuracy(FromAccuracy) + "} TO {1:" + DateFormatFromAccuracy(ToAccuracy) + "}", From, To);
-                }
-            }
-            else
-            {
-                return To.ToString(DateFormatFromAccuracy(FromAccuracy));
-            }
+            //    if (FromAccuracy == Accuracy.Unknown && ToAccuracy != Accuracy.Unknown)
+            //    {
+            //        return string.Format("BEF {1:" + DateFormatFromAccuracy(ToAccuracy) + "}", From, To);
+            //    }
+            //    else
+            //    {
+            //        return string.Format("FROM {0:" + DateFormatFromAccuracy(FromAccuracy) + "} TO {1:" + DateFormatFromAccuracy(ToAccuracy) + "}", From, To);
+            //    }
+            //}
+            //else
+            //{
+            //    return To.ToString(DateFormatFromAccuracy(FromAccuracy));
+            //}
         }
         private string DateFormatFromAccuracy(Accuracy acc)
         {

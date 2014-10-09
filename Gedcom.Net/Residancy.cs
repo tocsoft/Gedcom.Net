@@ -11,7 +11,7 @@ namespace Gedcom.Net
     {
         private readonly FileNode _node;
 
-        public Residancy(GedcomDocument document, FileNode node) : base(document, node)
+        public Residancy(Individual person, GedcomDocument document, FileNode node) : base(person, document, node)
         {
             _node = node;
         }
